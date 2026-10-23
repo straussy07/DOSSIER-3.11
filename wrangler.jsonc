@@ -1,0 +1,16 @@
+{
+  "name": "dossier-03-11",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api/*"
+    ]
+  },
+  "vars": {
+    "REVEAL_TITLE": "LE DOSSIER EST OUVERT.",
+    "REVEAL_MESSAGE": "Le silence est termin\u00e9. La suite arrive ici. Reste connect\u00e9."
+  }
+}
