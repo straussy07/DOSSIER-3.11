@@ -1,64 +1,42 @@
-# DOSSIER 03.11 — Import GitHub simple
+# DOSSIER 03.11 — Suite automatique
 
-Cette version contient le jeu complet dans **index.html**, avec ses images et sons intégrés. Code du coffre : 140. Troisième épreuve : toucher ACTIF.
+Le jeu initial est conservé. La suite dépend de l'heure du serveur, sans réglage de date ni bouton de simulation pour les visiteurs.
 
-## 1. GitHub
+- À 8 jours, 23 heures, 59 minutes, 59 secondes : porte DOSSIER 3.11, décor et judas verrouillé.
+- À 7 jours, 23 heures, 59 minutes, 59 secondes : le judas permet d'entrer dans la pièce fournie.
+- Dans la pièce : déplacement du cadrage à la souris, glissement tactile ou flèches du clavier. Le personnage barbu à gauche est le seul élément interactif ; cliquer déclenche une transition de tête vers le visiteur et le MP3 fourni. Les cinq indices du tableau deviennent consultables un par jour.
+- Révélation finale : 3 novembre 2026 à 00:00 Paris, inchangée.
 
-Pour éviter de mélanger les deux configurations, crée un nouveau dépôt nommé `dossier-03-11-v2`.
-Décompresse le ZIP, puis importe TOUS les fichiers extraits via Upload files.
-Ne dépose pas le ZIP et ne crée pas de sous-dossier supplémentaire.
-Valide avec Commit changes.
+Les seuils sont calculés en secondes avant la révélation. Avec le changement d'heure, cela correspond au 25 octobre à 01:00:01 Paris pour la porte et au 26 octobre à 00:00:01 Paris pour la pièce.
 
-À la page principale du dépôt, tu dois voir directement :
-- index.html
-- worker.mjs
-- wrangler.jsonc
-- package.json
-- build.mjs
-- verification.test.mjs
-- README.md
+## Mettre à jour le dépôt existant
 
-Le fichier .gitignore est également fourni ; il peut être masqué par ton ordinateur.
+1. Décompresser le ZIP.
+2. Remplacer TOUS les fichiers à la racine du dépôt existant, en ajoutant notamment `room-data.mjs`.
+3. Valider les changements (Commit changes).
+4. Cloudflare : conserver le Worker `dossier-3-11`, build `npm run build`, déploiement `npx --yes wrangler@4 deploy`, répertoire racine vide.
+5. Attendre que le déploiement réussisse. Le site évoluera ensuite automatiquement aux seuils prévus.
 
-## 2. Cloudflare Workers
+Ne déposer ni le ZIP lui-même, ni un dossier supplémentaire. Ne remplacer seulement index.html : le serveur doit aussi être mis à jour.
 
-Workers & Pages → Create application → GitHub → choisir `dossier-03-11-v2`.
+Fichiers attendus : index.html, worker.mjs, room-data.mjs, wrangler.jsonc, package.json, build.mjs, verification.test.mjs, clues-data.mjs, README.md, .gitignore.
 
-| Paramètre | Valeur |
-|---|---|
-| Nom du Worker | dossier-03-11 |
-| Branche | main |
-| Root directory / Path | vide |
-| Build command | npm run build |
-| Deploy command | npx --yes wrangler@4 deploy |
+## Protection et hébergement
 
-Clique Save and Deploy. L'application sera publique.
-Le build crée automatiquement dist/index.html ; ne crée pas ce dossier toi-même.
-Si un Worker dossier-03-11 existe déjà, ouvre-le puis Settings → Builds pour connecter le nouveau dépôt et renseigner les mêmes commandes.
+Cloudflare Workers est nécessaire. GitHub Pages seul ou un HTML ouvert localement ne peut pas assurer le calendrier serveur. Les images de la pièce et le son sont refusés par les API avant l'ouverture, même si l'heure du téléphone est changée. Il n'y a aucune route de prévisualisation dans ce dossier.
 
-## En cas d'erreur
+Le dépôt contient les images encodées dans room-data.mjs : garder le dépôt PRIVÉ si elles doivent rester confidentielles avant l'ouverture. Ne placer aucun secret final dans les fichiers publics. La variable serveur PROJECT_URL (HTTPS) reste configurable pour le 3 novembre.
 
-- package.json introuvable : les fichiers sont dans un sous-dossier. Remonte-les à la racine, ou renseigne ce sous-dossier dans Root directory.
-- dist introuvable : vérifie que Build command est exactement npm run build.
-- Nom de Worker différent : le nom dans Cloudflare doit correspondre au champ name de wrangler.jsonc.
-- Le navigateur affiche du code : tu as ouvert le fichier sur GitHub. Utilise le lien workers.dev fourni par Cloudflare après déploiement.
-- Autre erreur : copie les dernières lignes du journal du build pour identifier précisément le problème.
+## Validation
 
-## Vérification locale
+`npm test` vérifie les seuils à la milliseconde, l'accès aux médias et à la révélation. `npm run build` prépare le site. La scène est un panorama photographique avec déplacement du cadrage et transition entre deux poses de tête, pas un personnage 3D articulé. Le MP3 original est conservé. La stabilité sur un iPhone physique reste à vérifier.
 
-Avec Node.js 22 ou plus récent : npm run check, npm test, puis npm run build.
-Tu peux aussi ouvrir index.html directement dans ton navigateur pour tester le jeu. Les API de révélation nécessitent Cloudflare Workers.
+Pose de tête créée avec l'outil image intégré : modifier seulement la tête du barbu à gauche pour qu'il lève le regard vers le visiteur, préserver son identité, sa casquette, ses lunettes et le reste du studio. Seule la zone de la tête est composée dans la scène originale.
 
-## Révélation
+## Indices quotidiens
 
-L'heure de lancement reste le 3 novembre 2026 à 00:00, heure de Paris.
-Le serveur refuse la révélation avant cette date. Le lien final se configure avec la variable d'exécution PROJECT_URL (HTTPS). Sans lien, une conclusion générique s'affiche.
-Aucune information confidentielle du projet n'est incluse. N'ajoute pas de secret dans le dépôt.
+L’indice 1 ouvre à 6 j 23 h 59 min 59 s : le 27 octobre 2026 à 00:00:01 Paris. Puis un indice chaque 24 heures : 2 le 28, 3 le 29, 4 le 30, 5 le 31, à la même heure. Les précédents restent accessibles.
 
-## GitHub Pages
+Associations : 1 = Le lieu (photo du Zénith en haut à gauche) ; 2 = Les quatre flashes (bande photo en bas à gauche) ; 3 = Les trois programmes (écran en bas à droite) ; 4 = Les origines (carte rouge en haut au milieu) ; 5 = L’identité (document en haut à droite).
 
-Le fichier index.html à la racine permet une démonstration statique. GitHub Pages n'exécute pas worker.mjs : la révélation protégée nécessite l'hébergement Cloudflare Workers décrit ci-dessus.
-
-Références :
-https://developers.cloudflare.com/workers/ci-cd/builds/
-https://developers.cloudflare.com/workers/ci-cd/builds/configuration/
+Les fiches sont servies par /api/clue/1 à /api/clue/5, avec blocage serveur avant chaque date. Inclure le nouveau fichier clues-data.mjs dans le dépôt. Garder le dépôt privé pour ne pas exposer les fiches encodées avant leur ouverture. Le fichier Bêta est séparé : ne pas le publier sur le site de production.

@@ -16,3 +16,29 @@ test('le HTML autonome contient des scripts valides sans fichier externe',()=>{
  assert.ok(html.includes("code==='140'"));
  assert.ok(html.includes('id="activeCircuit"'));
 });
+
+import {DOOR_AT,ROOM_AT,chapterAt} from './worker.mjs';
+test('J-8 and J-7 follow Paris midnight across October clock change',()=>{
+ assert.equal(DOOR_AT,Date.parse('2026-10-24T23:00:01Z'));
+ assert.equal(ROOM_AT,Date.parse('2026-10-25T23:00:01Z'));
+ assert.equal(chapterAt(DOOR_AT-1),'game');assert.equal(chapterAt(DOOR_AT),'door');
+ assert.equal(chapterAt(ROOM_AT-1),'door');assert.equal(chapterAt(ROOM_AT),'room');
+ assert.equal(chapterAt(RELEASE),'reveal');
+});
+test('room image is denied before J-7 even with client-state parameters',async()=>{
+ for(const now of [DOOR_AT-1,DOOR_AT,ROOM_AT-1])assert.equal(api('/api/room-image',{},now).status,403);
+ const open=api('/api/room-image',{},ROOM_AT);assert.equal(open.status,200);assert.equal(open.headers.get('Content-Type'),'image/jpeg');
+ const bytes=new Uint8Array(await open.arrayBuffer());assert.equal(bytes[0],255);assert.equal(bytes[1],216);
+ assert.equal(api('/api/room-image?preview=room',{},ROOM_AT-1).status,404);
+});
+test('exact requested countdown thresholds and protected audio/pose',async()=>{
+ assert.equal((RELEASE-DOOR_AT)/1000,8*86400+23*3600+59*60+59);
+ assert.equal((RELEASE-ROOM_AT)/1000,7*86400+23*3600+59*60+59);
+ for(const path of ['/api/room-audio','/api/room-turn']){assert.equal(api(path,{},ROOM_AT-1).status,403);assert.equal(api(path,{},ROOM_AT).status,200)}
+});
+import {CLUE_AT,clueAt} from './worker.mjs';
+test('five clues unlock exactly every 24h, never before their own boundary',async()=>{
+ assert.equal((RELEASE-CLUE_AT)/1000,6*86400+23*3600+59*60+59);
+ for(let n=1;n<=5;n++){assert.equal(clueAt(n),CLUE_AT+(n-1)*86400000);assert.equal(api('/api/clue/'+n,{},clueAt(n)-1).status,403);const r=api('/api/clue/'+n,{},clueAt(n));assert.equal(r.status,200);assert.equal(r.headers.get('Content-Type'),'image/jpeg');assert.ok((await r.arrayBuffer()).byteLength>10000)}
+ for(const path of ['/api/clue/0','/api/clue/6','/api/clue/1?day=5'])assert.equal(api(path,{},0).status,404);
+});
