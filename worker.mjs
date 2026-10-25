@@ -6,7 +6,7 @@ export const ROOM_AT=Date.parse('2026-10-26T00:00:00+01:00');
 export const CLUE_AT=Date.parse('2026-10-27T00:00:00+01:00');
 export const FINALE_AT=Date.parse('2026-11-01T00:00:00+01:00'),SAFE_AT=Date.parse('2026-11-02T00:00:00+01:00'),LETTER_AT=Date.parse('2026-11-03T18:00:00+01:00');
 export const clueAt=id=>CLUE_AT+(id-1)*86400000;
-export const chapterAt=t=>t>=RELEASE?'reveal':t>=ROOM_AT?'room':t>=DOOR_AT?'door':'game';
+export const chapterAt=t=>t>=FINALE_AT?'finale':t>=ROOM_AT?'room':t>=DOOR_AT?'door':'game';
 export function api(path, env={}, now=Date.now()) {
   const headers={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store, max-age=0','X-Content-Type-Options':'nosniff'};
   if(path==='/api/letter-clock')return Response.json({now,releaseAt:LETTER_AT,finaleAt:FINALE_AT,safeAt:SAFE_AT},{headers});

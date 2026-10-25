@@ -59,6 +59,7 @@ test('Statut API publie les mêmes échéances au navigateur', async () => {
   assert.equal(d.safeAt, SAFE_AT);
   assert.equal(d.letterReleaseAt, LETTER_AT);
   assert.equal(d.chapter, 'room');
+  assert.equal((await api('/api/status', {}, FINALE_AT).json()).chapter, 'finale');
 });
 
 test('HTML : cinq indices, porte et salle synchronisés avec les dates serveur', () => {
@@ -78,9 +79,26 @@ test('HTML : cinq indices, porte et salle synchronisés avec les dates serveur',
   assert.deepEqual(times, Array.from({length:5},(_,i)=>clueAt(i+1)));
 });
 
-test('Redirection : la page /suite ne doit pas se rediriger sur elle-même', () => {
-  assert.ok(html.includes("d.finaleAt&&d.now>=d.finaleAt&&!/^\\/(?:suite|finale)"));
-  assert.match(html, /location\.pathname/);
+test('Le dernier chapitre reste dans index.html et ne se transforme pas en une autre révélation', () => {
+  assert.match(html, /dossier-finale-template/);
+  assert.match(html, /dossier-public-finale-controller/);
+  assert.match(html, /window\.DOSSIER_FINALE_START/);
+  assert.match(html, /scheduleCycle\(\)/);
+  assert.match(html, /function isLoopDay|const isLoopDay/);
+  assert.doesNotMatch(html, /location\.replace\('\/suite'\)/);
+  assert.doesNotMatch(html, /DOSSIER_TEST_MODE|dossier-test-panel|__DOSSIER_SIMULATED_EPOCH__|MODE TEST · TEMPS/);
+});
+
+test('Chaque fiche lance le zoom de caméra avant son ouverture, et annule le zoom après fermeture', () => {
+ assert.match(html,/clueCameraTransform\(camera,p\)/);
+ assert.match(html,/this\.animate\(850,p=>this\.clueCameraTransform\(camera,p\)\)/);
+ assert.match(html,/this\.animate\(730,p=>this\.clueCameraTransform\(oldCamera,1-p\)\)/);
+});
+
+test('La dernière scène ne révèle aucun nouvel écran à 18h le 3 novembre', () => {
+ assert.match(html,/if\(letterNow\(\)>=LETTER_RELEASE\)/);
+ assert.doesNotMatch(html,/if\(letterNow\(\)>=LETTER_RELEASE\)\{c\.innerHTML=.*revealLetter\(\)/);
+ assert.match(html,/frame\.srcdoc/);
 });
 
 test('URL de la lettre : seulement HTTPS, et jamais avant 18h le 3 novembre', async () => {
