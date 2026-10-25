@@ -1,0 +1,18 @@
+CORRECTIF DOSSIER 03.11 — GitHub + Cloudflare Workers
+
+Les noms des fichiers transmis ont été corrigés. Le Worker a une redirection interne explicite de / vers /index.html. Aucun compte à rebours n’a été modifié.
+
+IMPORTANT : CETTE ARCHIVE NE CONTIENT PAS 2 FICHIERS PRÉSENTS DANS LE PROJET INITIAL, MAIS NON FOURNIS ICI :
+- room-data.mjs
+- clues-data.mjs
+Ils doivent être présents à la racine du dépôt GitHub, sans quoi le déploiement Cloudflare échouera. Il ne faut pas les supprimer s'ils y sont déjà.
+
+INSTALLATION :
+1. Décompresser ce ZIP. Ne PAS envoyer le ZIP tel quel dans GitHub.
+2. Dans le dépôt GitHub, supprimer/renommer les anciennes versions (index(2026...).html, package(3).json, etc.) ; déposer les fichiers ci-dessus à la racine.
+3. Conserver/ajouter room-data.mjs et clues-data.mjs à la racine.
+4. Dans Cloudflare > Workers & Pages, créer un Worker connecté à ce dépôt (pas uniquement GitHub Pages).
+5. Build : npm run build ; Deploy : npx wrangler deploy ; racine du projet : / ; branche main.
+6. Ouvrir l'URL https://[nom].[compte].workers.dev et pas le lien GitHub /blob/, /raw/ ou ?raw=1.
+
+Attention : Github Pages, seul, n'exécute pas ce Worker et les API de déblocage ; le site interactif complet nécessite Cloudflare Workers.
