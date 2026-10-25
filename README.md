@@ -4,14 +4,14 @@ Ce dossier est la version de production pour Cloudflare Workers. Aucun sélecteu
 
 ## Mettre à jour ton site existant
 
-Dans le dépôt GitHub connecté à ton Worker, remplace les fichiers portant les mêmes noms par ceux de ce ZIP, puis valide avec **Commit changes**. Garde tous les fichiers à la racine. Ne remplace pas seulement `index.html` : `worker.mjs` reste nécessaire pour les dates et les accès serveur. La scène finale est désormais intégralement incluse dans `index.html` ; supprime l’ancien `finale.html` de ton dépôt. Attends que le déploiement Cloudflare soit terminé, puis recharge le site. Les deux compteurs gardent leurs échéances ; aucune progression temporelle de test n’est embarquée.
+Dans le dépôt GitHub connecté à ton Worker, remplace les fichiers portant les mêmes noms par ceux de ce ZIP, puis valide avec **Commit changes**. Garde tous les fichiers à la racine. Ne remplace pas seulement `index.html` : `finale.html` et `worker.mjs` sont nécessaires pour la suite. Attends que le déploiement Cloudflare soit terminé, puis recharge le site. Les deux compteurs gardent leurs échéances ; aucune progression temporelle de test n’est embarquée.
 
 ## Déposer sur GitHub
 
 1. Décompresser le ZIP sur l’ordinateur.
 2. Créer un dépôt GitHub. Le conserver privé tant que les fiches d’indices doivent rester confidentielles : elles sont présentes dans le code serveur du dépôt. Le site Cloudflare pourra être public même si le dépôt est privé.
 3. Dans le dépôt : **Add file → Upload files**.
-4. Glisser le contenu du dossier : `index.html`, `worker.mjs`, `room-data.mjs`, `clues-data.mjs`, `wrangler.jsonc`, `package.json`, `build.mjs`, `verification.test.mjs` et les documents. Les fichiers doivent se trouver directement à la racine du dépôt, sans dossier intermédiaire.
+4. Glisser le contenu du dossier : `index.html`, `finale.html`, `worker.mjs`, `room-data.mjs`, `clues-data.mjs`, `wrangler.jsonc`, `package.json`, `build.mjs`, `verification.test.mjs` et les documents. Les fichiers doivent se trouver directement à la racine du dépôt, sans dossier intermédiaire.
 5. Cliquer sur **Commit changes**.
 
 ## Connecter Cloudflare
@@ -61,7 +61,3 @@ Le rendu repose sur photos, canvas et plans CSS animés en perspective, optimis�
 Documentation Cloudflare : https://developers.cloudflare.com/workers/ci-cd/builds/configuration/ et https://developers.cloudflare.com/workers/static-assets/binding/.
 
 Voir `CREDITS-SONS.md` pour les nouveaux bruitages.
-
-## Index unique
-
-L’introduction, le jeu et la scène finale sont intégrés au même `index.html`. Le serveur sélectionne automatiquement le chapitre selon la date réelle. Aucun fichier `finale.html`, aucun iframe et aucun sélecteur de test ne sont utilisés. Les images confidentielles des indices et la véritable URL de révélation restent contrôlées par le Worker. Un index ouvert seul sur l’ordinateur ne remplace pas ce serveur.
