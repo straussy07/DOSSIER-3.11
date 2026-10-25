@@ -26,4 +26,46 @@ export function api(path, env={}, now=Date.now()) {
   }
   return new Response(JSON.stringify({error:'not_found'}),{status:404,headers});
 }
-export default {async fetch(request,env){const url=new URL(request.url),path=decodeURIComponent(url.pathname).replace(/\/+/g,'/');const now=Date.now();if(path.startsWith('/api/'))return api(path,env,now);if(/^\/(?:suite|finale)(?:\.html)?\/?$/.test(path)){if(now<FINALE_AT)return new Response('Le dernier chapitre est encore scellé.',{status:403,headers:{'Cache-Control':'no-store'}});url.pathname='/finale.html';request=new Request(url,request)}const response=await env.ASSETS.fetch(request);const h=new Headers(response.headers);h.set('Cache-Control','no-store');h.set('X-Content-Type-Options','nosniff');h.set('Referrer-Policy','strict-origin-when-cross-origin');h.set('Permissions-Policy','camera=(), microphone=(), geolocation=()');h.set('Content-Security-Policy',"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob: data:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'");return new Response(response.body,{status:response.status,headers:h})}};
+// Point d'entrée Cloudflare Workers : le site est toujours servi comme une page HTML.
+// Ainsi, même si le stockage des assets retourne un type générique ou un entête
+// Content-Disposition: attachment, l'accueil ne se télécharge pas.
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const path = decodeURIComponent(url.pathname).replace(/\/+/g, '/');
+    const now = Date.now();
+    if (path.startsWith('/api/')) return api(path, env, now);
+
+    const isHome = path === '/' || path === '/index.html';
+    const isFinaleAlias = /^\/(?:suite|finale)(?:\.html)?\/?$/.test(path);
+    if (isFinaleAlias && now < FINALE_AT) {
+      return new Response('Le dernier chapitre est encore scellé.', {
+        status: 403,
+        headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' }
+      });
+    }
+    const isHtmlPage = isHome || isFinaleAlias;
+    if (isHtmlPage) {
+      url.pathname = '/index.html';
+      request = new Request(url, request);
+    }
+
+    const response = await env.ASSETS.fetch(request);
+    const h = new Headers(response.headers);
+    h.set('Cache-Control', 'no-store, max-age=0');
+    h.set('X-Content-Type-Options', 'nosniff');
+    h.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    h.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    h.set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob: data:; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'");
+    if (isHtmlPage && response.ok) {
+      h.set('Content-Type', 'text/html; charset=utf-8');
+      h.set('Content-Disposition', 'inline');
+    }
+    // Les mauvaises métadonnées « attachment » ne doivent pas être propagées.
+    // Cela corrige les anciens déploiements servant index.html comme fichier brut.
+    else if (h.get('Content-Disposition')?.toLowerCase().startsWith('attachment')) {
+      h.delete('Content-Disposition');
+    }
+    return new Response(response.body, { status: response.status, headers: h });
+  }
+};

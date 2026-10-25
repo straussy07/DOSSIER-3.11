@@ -1,1 +1,1 @@
-import{mkdir,copyFile}from'node:fs/promises';await mkdir('dist',{recursive:true});for(const n of ['index.html','finale.html'])await copyFile(n,'dist/'+n);console.log('Build prêt.');
+import{mkdir,copyFile,rm}from'node:fs/promises';await rm('dist',{recursive:true,force:true});await mkdir('dist',{recursive:true});await copyFile('index.html','dist/index.html');console.log('Build prêt : index unique.');
