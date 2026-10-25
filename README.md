@@ -1,42 +1,67 @@
-# DOSSIER 03.11 — Suite automatique
+# DOSSIER 03.11 — site complet
 
-Le jeu initial est conservé. La suite dépend de l'heure du serveur, sans réglage de date ni bouton de simulation pour les visiteurs.
+Ce dossier est la version de production pour Cloudflare Workers. Aucun sélecteur de chapitre, aucune avance de date et aucun mode bêta ne sont inclus. Les visiteurs suivent exclusivement les dates réelles vérifiées par le serveur.
 
-- À 8 jours, 23 heures, 59 minutes, 59 secondes : porte DOSSIER 3.11, décor et judas verrouillé.
-- À 7 jours, 23 heures, 59 minutes, 59 secondes : le judas permet d'entrer dans la pièce fournie.
-- Dans la pièce : déplacement du cadrage à la souris, glissement tactile ou flèches du clavier. Le personnage barbu à gauche est le seul élément interactif ; cliquer déclenche une transition de tête vers le visiteur et le MP3 fourni. Les cinq indices du tableau deviennent consultables un par jour.
-- Révélation finale : 3 novembre 2026 à 00:00 Paris, inchangée.
+## Mettre à jour ton site existant
 
-Les seuils sont calculés en secondes avant la révélation. Avec le changement d'heure, cela correspond au 25 octobre à 01:00:01 Paris pour la porte et au 26 octobre à 00:00:01 Paris pour la pièce.
+Dans le dépôt GitHub connecté à ton Worker, remplace les fichiers portant les mêmes noms par ceux de ce ZIP, puis valide avec **Commit changes**. Garde tous les fichiers à la racine. Ne remplace pas seulement `index.html` : `worker.mjs` reste nécessaire pour les dates et les accès serveur. La scène finale est désormais intégralement incluse dans `index.html` ; supprime l’ancien `finale.html` de ton dépôt. Attends que le déploiement Cloudflare soit terminé, puis recharge le site. Les deux compteurs gardent leurs échéances ; aucune progression temporelle de test n’est embarquée.
 
-## Mettre à jour le dépôt existant
+## Déposer sur GitHub
 
-1. Décompresser le ZIP.
-2. Remplacer TOUS les fichiers à la racine du dépôt existant, en ajoutant notamment `room-data.mjs`.
-3. Valider les changements (Commit changes).
-4. Cloudflare : conserver le Worker `dossier-3-11`, build `npm run build`, déploiement `npx --yes wrangler@4 deploy`, répertoire racine vide.
-5. Attendre que le déploiement réussisse. Le site évoluera ensuite automatiquement aux seuils prévus.
+1. Décompresser le ZIP sur l’ordinateur.
+2. Créer un dépôt GitHub. Le conserver privé tant que les fiches d’indices doivent rester confidentielles : elles sont présentes dans le code serveur du dépôt. Le site Cloudflare pourra être public même si le dépôt est privé.
+3. Dans le dépôt : **Add file → Upload files**.
+4. Glisser le contenu du dossier : `index.html`, `worker.mjs`, `room-data.mjs`, `clues-data.mjs`, `wrangler.jsonc`, `package.json`, `build.mjs`, `verification.test.mjs` et les documents. Les fichiers doivent se trouver directement à la racine du dépôt, sans dossier intermédiaire.
+5. Cliquer sur **Commit changes**.
 
-Ne déposer ni le ZIP lui-même, ni un dossier supplémentaire. Ne remplacer seulement index.html : le serveur doit aussi être mis à jour.
+## Connecter Cloudflare
 
-Fichiers attendus : index.html, worker.mjs, room-data.mjs, wrangler.jsonc, package.json, build.mjs, verification.test.mjs, clues-data.mjs, README.md, .gitignore.
+Utiliser **Workers**, pas GitHub Pages : les déblocages reposent sur le serveur.
 
-## Protection et hébergement
+1. Dans Cloudflare, ouvrir **Workers & Pages**, puis connecter le dépôt GitHub à un Worker, ou ouvrir le Worker existant et ses paramètres **Builds**.
+2. Sélectionner le dépôt et la branche `main`.
+3. Nom du Worker : `dossier-3-11`, comme dans `wrangler.jsonc`. Pour un autre nom, modifier également ce fichier.
+4. Répertoire racine : laisser vide si les fichiers sont à la racine.
+5. Commande de build : `npm run build`.
+6. Commande de déploiement : `npx wrangler deploy`.
+7. Déployer, puis ouvrir l’URL `workers.dev` affichée par Cloudflare. Chaque commit suivant sur `main` déclenchera un nouveau déploiement si la liaison Git est activée.
 
-Cloudflare Workers est nécessaire. GitHub Pages seul ou un HTML ouvert localement ne peut pas assurer le calendrier serveur. Les images de la pièce et le son sont refusés par les API avant l'ouverture, même si l'heure du téléphone est changée. Il n'y a aucune route de prévisualisation dans ce dossier.
+Le dossier `dist` est créé automatiquement. Ne pas envoyer le ZIP directement comme un fichier du dépôt. Aucun compte visiteur, aucune base de données et aucun service sonore externe requis à l’exécution.
 
-Le dépôt contient les images encodées dans room-data.mjs : garder le dépôt PRIVÉ si elles doivent rester confidentielles avant l'ouverture. Ne placer aucun secret final dans les fichiers publics. La variable serveur PROJECT_URL (HTTPS) reste configurable pour le 3 novembre.
+## Calendrier conservé (heure de Paris)
 
-## Validation
+- Porte : 25 octobre 2026 à 00 h.
+- Salle et indice 1 : 27 octobre à 00 h.
+- Indices 2, 3, 4, 5 : 28, 29, 30, 31 octobre à 00 h.
+- Dernier chapitre : 1er novembre à 00 h — pièce vide et téléphone.
+- Coffre du dernier chapitre : 2 novembre à 00 h.
+- **Premier compteur : 3 novembre à 00 h, inchangé.**
+- **Deuxième compteur, enveloppe et lettre : 3 novembre à 18 h.**
 
-`npm test` vérifie les seuils à la milliseconde, l'accès aux médias et à la révélation. `npm run build` prépare le site. La scène est un panorama photographique avec déplacement du cadrage et transition entre deux poses de tête, pas un personnage 3D articulé. Le MP3 original est conservé. La stabilité sur un iPhone physique reste à vérifier.
+Les premiers horaires proviennent du fichier corrigé `index_minuit_paris_corrige.html`. Le dernier chapitre prend le relais automatiquement à partir du 1er novembre ; le code du premier compteur reste indépendant.
 
-Pose de tête créée avec l'outil image intégré : modifier seulement la tête du barbu à gauche pour qu'il lève le regard vers le visiteur, préserver son identité, sa casquette, ses lunettes et le reste du studio. Seule la zone de la tête est composée dans la scène originale.
+## Révélation personnalisée
 
-## Indices quotidiens
+Dans Cloudflare, **Settings → Variables & Secrets**, ajouter `LETTER_PROJECT_URL` avec l’URL HTTPS finale. Cette valeur est lue seulement côté serveur, et n’est renvoyée qu’à partir du 3 novembre 2026 à 18 h Paris. Ne pas l’inscrire dans l’HTML si elle doit rester secrète. Sans URL, une conclusion personnalisable s’affiche sans lien cassé.
 
-L’indice 1 ouvre à 6 j 23 h 59 min 59 s : le 27 octobre 2026 à 00:00:01 Paris. Puis un indice chaque 24 heures : 2 le 28, 3 le 29, 4 le 30, 5 le 31, à la même heure. Les précédents restent accessibles.
+Le texte de conclusion se règle dans `LETTER_REVEAL_MESSAGE` dans `wrangler.jsonc`, ou dans les variables d’environnement. Les variables `REVEAL_TITLE`, `REVEAL_MESSAGE` et `PROJECT_URL` appartiennent à la première révélation, à minuit ; elles ne règlent pas le compteur de la lettre.
 
-Associations : 1 = Le lieu (photo du Zénith en haut à gauche) ; 2 = Les quatre flashes (bande photo en bas à gauche) ; 3 = Les trois programmes (écran en bas à droite) ; 4 = Les origines (carte rouge en haut au milieu) ; 5 = L’identité (document en haut à droite).
+Le serveur contrôle l’accès aux images d’indices, à la salle, au dernier chapitre, au coffre et à la révélation de 18 h. Changer l’horloge ou un état JavaScript ne donne pas accès à la véritable URL finale avant la date serveur. Le texte narratif générique et les visuels chargés ne sont pas des secrets cryptographiques.
 
-Les fiches sont servies par /api/clue/1 à /api/clue/5, avec blocage serveur avant chaque date. Inclure le nouveau fichier clues-data.mjs dans le dépôt. Garder le dépôt privé pour ne pas exposer les fiches encodées avant leur ouverture. Le fichier Bêta est séparé : ne pas le publier sur le site de production.
+## Vérification locale
+
+Avec Node.js récent : `npm test`, puis `npm run dev`. Le serveur de développement utilise lui aussi la date réelle. Aucune commande permettant d’avancer le temps n’est présente dans cette livraison.
+
+Tests inclus : sept tests couvrant les seuils avant/à l’heure de déblocage, les cinq indices, la salle, les deux échéances et l’URL de révélation. Le parcours de test est contrôlé dans Chrome ; un essai sur ton iPhone/Android reste à faire avant annonce publique.
+
+Le rendu repose sur photos, canvas et plans CSS animés en perspective, optimisés sans moteur 3D externe. Le dernier chapitre utilise des sons de bibliothèque intégrés, sans voix synthétique. Les ouvertures de la porte du bunker et de la porte de la salle utilisent également le bruitage métallique enregistré, synchronisé avec le mouvement. Le bouton Son OFF coupe ces sons ; ils s’arrêtent également quand la page est masquée.
+
+## Sources
+
+Documentation Cloudflare : https://developers.cloudflare.com/workers/ci-cd/builds/configuration/ et https://developers.cloudflare.com/workers/static-assets/binding/.
+
+Voir `CREDITS-SONS.md` pour les nouveaux bruitages.
+
+## Index unique
+
+L’introduction, le jeu et la scène finale sont intégrés au même `index.html`. Le serveur sélectionne automatiquement le chapitre selon la date réelle. Aucun fichier `finale.html`, aucun iframe et aucun sélecteur de test ne sont utilisés. Les images confidentielles des indices et la véritable URL de révélation restent contrôlées par le Worker. Un index ouvert seul sur l’ordinateur ne remplace pas ce serveur.
