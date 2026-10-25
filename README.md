@@ -1,49 +1,52 @@
-# DOSSIER 03.11 — version corrigée pour GitHub + Cloudflare Workers
+# DOSSIER 03.11 — correctif du calendrier / GitHub + Cloudflare Workers
 
-## Ce qui est corrigé
+## Dates confirmées — minuit, heure de Paris
 
-- La vraie page d’accueil s’appelle `index.html` (pas `index(2026…).html`).
-- Le Worker redirige **en interne** `/` vers `/index.html` et envoie `Content-Type: text/html; charset=utf-8` et `Content-Disposition: inline` : le navigateur affiche le site au lieu de télécharger le fichier.
-- Les fichiers `room-data.mjs` et `clues-data.mjs`, nécessaires aux scènes et aux indices, sont inclus.
-- Le compteur **principal** et sa révélation serveur sont réglés au **3 novembre 2026, 00 h 00 à Paris** (`2026-11-02T23:00:00.000Z`).
-- Le compteur **secondaire de la lettre** reste fixé au **3 novembre 2026 à 18 h 00 à Paris**, sans décaler le premier.
-- Aucun mode d’accélération temporelle n’est ajouté. Les accès aux ressources privées utilisent l’heure du serveur.
-
-## Publication : IMPORTANT
-
-1. **Décompresser** `DOSSIER_03_11_SITE_CORRIGE.zip` sur votre ordinateur.
-2. Sur **GitHub**, ouvrir le dépôt connecté au Worker ; supprimer ou remplacer les fichiers historiques nommés `index(…).html`, `worker(2).mjs`, `package(4).json`, `wrangler(2).jsonc`, etc.
-3. Avec **Add file > Upload files**, importer les fichiers *à la racine*, sans dossier intermédiaire. Doivent impérativement être présents et porter **exactement** ces noms :
-   `index.html`, `worker.mjs`, `room-data.mjs`, `clues-data.mjs`, `build.mjs`, `package.json`, `wrangler.jsonc`, `verification.test.mjs`.
-4. Cliquer **Commit changes**.
-5. Dans **Cloudflare > Workers & Pages**, connecter ce dépôt et sa branche `main` à un **Worker** (pas seulement GitHub Pages).
-6. Définir **Build command** : `npm run build` et **Deploy command** : `npx wrangler deploy`. Répertoire racine : dépôt (`/` ou vide). Les fichiers `dist/index.html` sont créés lors du build.
-7. Ouvrir l’**adresse `https://...workers.dev/`** fournie par Cloudflare, et non une adresse GitHub `/blob/`, `/raw/`, `?raw=1` ou un lien vers un fichier ZIP. Ces liens servent à télécharger ou consulter le code, pas à afficher le site.
-
-⚠️ **GitHub Pages seul ne suffit pas** : la salle, les indices et la révélation utilisent les API du Worker.
-
-## Vérifications
-
-- `npm test` teste notamment le compteur principal à la seconde près, le déverrouillage serveur et le format HTML en réponse à `/`.
-- `npm run build` prépare le dossier `dist`.
-- Pour tester localement sur un ordinateur avec Node.js : `npm run dev` (Cloudflare Wrangler doit pouvoir s’installer).
-
-## Calendrier (heure de Paris)
-
-| Événement | Date / heure |
+| Étape | Date et heure (Europe/Paris) |
 |---|---|
-| Porte | 25 octobre à 00 h 00 |
-| Salle + indice 1 | 27 octobre à 00 h 00 |
-| Indices suivants | 28–31 octobre à 00 h 00 |
-| Dernier chapitre / pièce vide | 1er novembre à 00 h 00 |
-| Coffre | 2 novembre à 00 h 00 |
-| **Révélation du premier compteur** | **3 novembre à 00 h 00** |
-| **Révélation de la lettre / second compteur** | **3 novembre à 18 h 00** |
+| Apparition de la porte fermée | 25 octobre 2026, 00 h |
+| Ouverture de la porte / entrée dans la pièce | 26 octobre 2026, 00 h |
+| Indice 1 | 27 octobre 2026, 00 h |
+| Indice 2 | 28 octobre 2026, 00 h |
+| Indice 3 | 29 octobre 2026, 00 h |
+| Indice 4 | 30 octobre 2026, 00 h |
+| Indice 5 | 31 octobre 2026, 00 h |
+| Début prévu du dernier chapitre | 1er novembre 2026, 00 h |
+| Accès serveur au coffre | 2 novembre 2026, 00 h |
+| Premier compte à rebours | 3 novembre 2026, 00 h |
+| Deuxième compte à rebours : révélation de la lettre | 3 novembre 2026, 18 h |
 
-**Attention** : si vous publiez cette version après une date de déblocage, le chapitre du jour sera immédiatement disponible.
+**Attention au changement d'heure :** la porte apparaît le 25 octobre à minuit **UTC+2**, tandis que l'ouverture du 26 est à minuit **UTC+1**. Il s'écoule donc 25 heures entre ces deux instants. Les cinq indices sont publiés à un intervalle de 24 heures. Le serveur et la page HTML sont synchronisés sur cette chronologie.
 
-## Révélation
+## Ce qui a été modifié
 
-Configurer au besoin `PROJECT_URL` pour la révélation initiale et `LETTER_PROJECT_URL` pour la seconde révélation dans **Cloudflare > Worker > Settings > Variables & Secrets**. Ces URL doivent être HTTPS et ne sont transmises au visiteur qu'à la date autorisée côté serveur. Les valeurs absentes produisent un texte de remplacement, pas un lien cassé.
+- **worker.mjs** : ouverture effective de la pièce le 26 octobre à 00h00 et maintien du premier indice le 27 octobre à 00h00 ; mêmes heures de Paris pour les étapes suivantes. Correction également de la route `/` qui doit servir le fichier `index.html` sur Cloudflare.
+- **index.html** : les horaires étaient déjà bons ; un risque de redirection infinie sur `/suite` a été corrigé, sans toucher aux visuels, aux animations, aux sons ou aux deux échéances.
+- **verification.test.mjs** : tests de synchronisation du HTML et du Worker, des seuils, des cinq indices, du changement d'heure, des compteurs et de la redirection.
+- **README.md** : le calendrier et l'état réel des fichiers sont rectifiés.
+- Les autres fichiers sont conservés, uniquement renommés (`package.json`, `build.mjs`, `wrangler.jsonc`, `CREDITS-SONS.md`) pour GitHub.
 
-L'ensemble du site (y compris la scène finale) est déjà inclus dans `index.html`. Ne pas recréer un fichier `finale.html`.
+## Images, sons et indices : fichiers maintenant inclus
+
+Les deux fichiers manquants ont été ajoutés à **cette archive** sous les noms exacts attendus par le Worker :
+
+- `room-data.mjs` : les vraies images et le vrai son de la salle ;
+- `clues-data.mjs` : les cinq images d'indices d'origine.
+
+Tu n'as plus besoin de récupérer ces deux fichiers séparément dans ton ancien dépôt. Ils sont inclus avec le reste. **Attention :** conserve ton dépôt GitHub privé si les fiches d'indices doivent rester confidentielles avant leur déblocage. Les médias fournis par l'utilisateur ont été conservés sans modification.
+
+## AUTRE POINT À VÉRIFIER AVANT LA MISE EN LIGNE
+
+L'`index.html` transmis ne contient pas de logique de la scène finale avec **téléphone / coffre / enveloppe / lettre** (pas d'appel aux API `/api/letter-access`, `/api/letter-clock` ou `/api/letter-reveal`). Il déclenche en revanche une navigation vers `/suite` le 1er novembre. J'ai supprimé le risque de rechargement infini sur cette adresse, mais **cela ne remplace pas la scène finale manquante**. Si une version plus récente de ton index contient ces animations, il faut la conserver et reporter le calendrier et la correction de redirection dessus. Ne considère pas cette archive comme une reconstitution complète de ce dernier chapitre.
+
+## Mise à jour sur GitHub
+
+1. Décompresse l'archive sur ton ordinateur.
+2. Dans le dépôt GitHub relié à Cloudflare, remplace à la racine les 10 fichiers de cette archive (`index.html`, `worker.mjs`, `room-data.mjs`, `clues-data.mjs`, `verification.test.mjs`, `README.md`, `package.json`, `build.mjs`, `wrangler.jsonc`, `CREDITS-SONS.md`).
+3. **Dépose aussi** `room-data.mjs` et `clues-data.mjs` fournis dans cette archive, avec ces noms exacts ; ils sont nécessaires à ton site.
+4. Confirme les modifications avec **Commit changes**, puis laisse Cloudflare déployer la nouvelle version.
+5. Paramètres usuels dans Cloudflare Workers : build `npm run build` ; déploiement `npx wrangler deploy` ; répertoire racine `.` et branche `main`.
+
+Le système de dates sécurisées requiert **Cloudflare Workers**, pas un simple hébergement GitHub Pages. Les fichiers multimédias sont inclus. Lance `npm test` pour vérifier les dates, les autorisations et les vrais médias, puis `npm run build` pour produire `dist/index.html`.
+
+Les liens HTTPS de révélation sont configurés côté serveur avec `PROJECT_URL` (3 novembre à minuit) et `LETTER_PROJECT_URL` (3 novembre à 18h) dans les variables Cloudflare. Ne mets pas le lien secret dans le HTML avant la date de révélation.

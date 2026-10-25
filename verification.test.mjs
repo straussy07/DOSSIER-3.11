@@ -1,43 +1,120 @@
-import test from 'node:test';import assert from 'node:assert/strict';import{api,RELEASE,DOOR_AT,ROOM_AT,clueAt,FINALE_AT,SAFE_AT,LETTER_AT}from'./worker.mjs';
-test('Horaires précédents préservés et compteur lettre distinct',()=>{assert.equal(RELEASE,Date.parse('2026-11-02T23:00:00Z'));assert.equal(DOOR_AT,Date.parse('2026-10-24T22:00:00Z'));assert.equal(ROOM_AT,Date.parse('2026-10-26T23:00:00Z'));assert.equal(LETTER_AT,Date.parse('2026-11-03T17:00:00Z'));assert.equal(LETTER_AT-RELEASE,18*3600000)});
-test('Chaque indice se débloque exactement à son horaire',()=>{for(let id=1;id<=5;id++){assert.equal(api('/api/clue/'+id,{},clueAt(id)-1).status,403);assert.equal(api('/api/clue/'+id,{},clueAt(id)).status,200)}});
-test('Salle et audio restent scellés avant la date',()=>{for(const p of ['/api/room-image','/api/room-turn','/api/room-audio']){assert.equal(api(p,{},ROOM_AT-1).status,403);assert.equal(api(p,{},ROOM_AT).status,200)}});
-test('Déverrouillage coffre séparé de la révélation',()=>{assert.equal(api('/api/letter-access',{},SAFE_AT-1).status,403);assert.equal(api('/api/letter-access',{},SAFE_AT).status,200);assert.equal(api('/api/letter-reveal',{},LETTER_AT-1).status,403);assert.equal(api('/api/letter-reveal',{},LETTER_AT).status,200)});
-test('Révélation initiale reste à minuit',()=>{assert.equal(api('/api/reveal',{},RELEASE-1).status,403);assert.equal(api('/api/reveal',{},RELEASE).status,200)});
-test('Pas de lien cassé et URL limitée à HTTPS',async()=>{for(const env of [{},{LETTER_PROJECT_URL:'javascript:alert(1)'}])assert.equal((await api('/api/letter-reveal',env,LETTER_AT).json()).url,null);assert.equal((await api('/api/letter-reveal',{LETTER_PROJECT_URL:'https://example.com'},LETTER_AT).json()).url,'https://example.com/')});
-test('Statut serveur publie deux échéances indépendantes',async()=>{const d=await api('/api/status',{},FINALE_AT).json();assert.equal(d.releaseAt,RELEASE);assert.equal(d.letterReleaseAt,LETTER_AT);assert.equal(d.finaleAt,FINALE_AT)});
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import dossierWorker, {api, RELEASE, DOOR_AT, ROOM_AT, CLUE_AT, clueAt, FINALE_AT, SAFE_AT, LETTER_AT, chapterAt} from './worker.mjs';
 
-// Vérifie directement les headers qui empêchent le téléchargement de la page.
-import worker from './worker.mjs';
-test('Page accueil servie en HTML dans le navigateur, jamais comme téléchargement', async () => {
-  const visited=[];
-  const env={ASSETS:{fetch:async req=>{
-    visited.push(new URL(req.url).pathname);
-    // Simule le cas problématique d'un asset retournant attachment/octet-stream.
-    return new Response('<!doctype html><title>Dossier</title>', {status:200,headers:{
-      'Content-Type':'application/octet-stream',
-      'Content-Disposition':'attachment; filename="index.html"'
-    }});
-  }}};
-  for (const page of ['/', '/index.html']) {
-    const res=await worker.fetch(new Request('https://example.workers.dev'+page),env);
-    assert.equal(res.status,200);
-    assert.equal(res.headers.get('Content-Type'),'text/html; charset=utf-8');
-    assert.equal(res.headers.get('Content-Disposition'),'inline');
-    assert.match(await res.text(),/^<!doctype html>/i);
-  }
-  assert.deepEqual(visited,['/index.html','/index.html']);
+const millis = value => Date.parse(value);
+const html = readFileSync(new URL('./index.html', import.meta.url), 'utf8');
+
+test('Heure de Paris : apparition de la porte le 25/10 à 00h, salle le 26/10 à 00h', () => {
+  assert.equal(DOOR_AT, millis('2026-10-25T00:00:00+02:00'));
+  assert.equal(ROOM_AT, millis('2026-10-26T00:00:00+01:00'));
+  assert.equal(ROOM_AT - DOOR_AT, 25 * 3600000); // changement d'heure dans la nuit du 25
+  assert.equal(chapterAt(DOOR_AT - 1), 'game');
+  assert.equal(chapterAt(DOOR_AT), 'door');
+  assert.equal(chapterAt(ROOM_AT - 1), 'door');
+  assert.equal(chapterAt(ROOM_AT), 'room');
 });
 
-test('Le premier compteur est le 3 novembre à minuit en heure de Paris, à la seconde près', async () => {
-  assert.equal(RELEASE,Date.parse('2026-11-03T00:00:00+01:00'));
-  const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB', {
-    timeZone:'Europe/Paris', year:'numeric',month:'2-digit',day:'2-digit',
-    hour:'2-digit', minute:'2-digit',second:'2-digit',hourCycle:'h23'
-  }).formatToParts(new Date(RELEASE)).map(p=>[p.type,p.value]));
-  assert.equal([parts.year,parts.month,parts.day,parts.hour,parts.minute,parts.second].join('-'), '2026-11-03-00-00-00');
-  assert.equal(api('/api/reveal',{},RELEASE-1000).status,403);
-  assert.equal(api('/api/reveal',{},RELEASE-1).status,403);
-  assert.equal(api('/api/reveal',{},RELEASE).status,200);
-  assert.equal(api('/api/letter-reveal',{},RELEASE).status,403);
+test('Indices : un nouveau à minuit les 27, 28, 29, 30 et 31 octobre', () => {
+  assert.equal(CLUE_AT, millis('2026-10-27T00:00:00+01:00'));
+  const dates = ['2026-10-27', '2026-10-28', '2026-10-29', '2026-10-30', '2026-10-31'];
+  for (let id = 1; id <= 5; id++) {
+    const unlock = millis(`${dates[id-1]}T00:00:00+01:00`);
+    assert.equal(clueAt(id), unlock);
+    assert.equal(api(`/api/clue/${id}`, {}, unlock - 1).status, 403);
+    assert.equal(api(`/api/clue/${id}`, {}, unlock).status, 200);
+  }
+  // Le 26 : la pièce est accessible, mais AUCUN indice ne l'est encore.
+  for (let id = 1; id <= 5; id++) assert.equal(api(`/api/clue/${id}`, {}, ROOM_AT).status, 403);
+});
+
+test('Pièce, sons et image : accessibles dès le 26 octobre à minuit', () => {
+  for (const path of ['/api/room-image', '/api/room-turn', '/api/room-audio']) {
+    assert.equal(api(path, {}, ROOM_AT - 1).status, 403);
+    assert.equal(api(path, {}, ROOM_AT).status, 200);
+  }
+});
+
+test('Jalons du dernier chapitre, coffre et deux compteurs restent indépendants', () => {
+  assert.equal(FINALE_AT, millis('2026-11-01T00:00:00+01:00'));
+  assert.equal(SAFE_AT, millis('2026-11-02T00:00:00+01:00'));
+  assert.equal(RELEASE, millis('2026-11-03T00:00:00+01:00'));
+  assert.equal(LETTER_AT, millis('2026-11-03T18:00:00+01:00'));
+  assert.equal(LETTER_AT-RELEASE, 18 * 3600000);
+  assert.equal(api('/api/letter-access', {}, SAFE_AT - 1).status, 403);
+  assert.equal(api('/api/letter-access', {}, SAFE_AT).status, 200);
+  assert.equal(api('/api/reveal', {}, RELEASE - 1).status, 403);
+  assert.equal(api('/api/reveal', {}, RELEASE).status, 200);
+  assert.equal(api('/api/letter-reveal', {}, LETTER_AT - 1).status, 403);
+  assert.equal(api('/api/letter-reveal', {}, LETTER_AT).status, 200);
+});
+
+test('Statut API publie les mêmes échéances au navigateur', async () => {
+  const d = await api('/api/status', {}, ROOM_AT).json();
+  assert.equal(d.doorAt, DOOR_AT);
+  assert.equal(d.roomAt, ROOM_AT);
+  assert.equal(d.releaseAt, RELEASE);
+  assert.equal(d.finaleAt, FINALE_AT);
+  assert.equal(d.safeAt, SAFE_AT);
+  assert.equal(d.letterReleaseAt, LETTER_AT);
+  assert.equal(d.chapter, 'room');
+});
+
+test('HTML : cinq indices, porte et salle synchronisés avec les dates serveur', () => {
+  const values = {
+    porteMs: DOOR_AT,
+    salleMs: ROOM_AT,
+    cibleMs: RELEASE,
+  };
+  for (const [key, actual] of Object.entries(values)) {
+    const match = html.match(new RegExp(`${key}: Date\\.parse\\('([^']+)'\\)`));
+    assert.ok(match, `La date ${key} doit être présente dans le HTML`);
+    assert.equal(Date.parse(match[1]), actual, `HTML et Worker doivent être synchronisés pour ${key}`);
+  }
+  const indices = html.match(/indicesMs: Object\.freeze\(\[([\s\S]*?)\]\)/);
+  assert.ok(indices, 'Le tableau des indices doit être présent');
+  const times = [...indices[1].matchAll(/Date\.parse\('([^']+)'\)/g)].map(x => Date.parse(x[1]));
+  assert.deepEqual(times, Array.from({length:5},(_,i)=>clueAt(i+1)));
+});
+
+test('Redirection : la page /suite ne doit pas se rediriger sur elle-même', () => {
+  assert.ok(html.includes("d.finaleAt&&d.now>=d.finaleAt&&!/^\\/(?:suite|finale)"));
+  assert.match(html, /location\.pathname/);
+});
+
+test('URL de la lettre : seulement HTTPS, et jamais avant 18h le 3 novembre', async () => {
+  for (const env of [{}, {LETTER_PROJECT_URL:'javascript:alert(1)'}]) {
+    assert.equal((await api('/api/letter-reveal', env, LETTER_AT).json()).url,null);
+  }
+  assert.equal((await api('/api/letter-reveal', {LETTER_PROJECT_URL:'https://example.com'}, LETTER_AT).json()).url, 'https://example.com/');
+});
+
+
+test('La racine / sert bien index.html (Cloudflare html_handling: none)', async () => {
+  const response = await dossierWorker.fetch(new Request('https://example.workers.dev/'), {
+    ASSETS: { fetch: request => new Response(new URL(request.url).pathname) },
+  });
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), '/index.html');
+});
+
+// Contrôle des médias réellement fournis par le propriétaire du projet.
+import {CLUE_IMAGES} from './clues-data.mjs';
+import {ROOM_IMAGE, ROOM_TURN, ROOM_AUDIO} from './room-data.mjs';
+
+test('Fichiers multimédias originaux : cinq JPEG, deux JPEG de pièce et un MP3', async () => {
+  assert.equal(CLUE_IMAGES.length, 5);
+  for (const [label, value] of [...CLUE_IMAGES.map((b,i)=>[`indice-${i+1}`,b]), ['piece',ROOM_IMAGE], ['piece-tournee',ROOM_TURN]]) {
+    const data=Buffer.from(value,'base64');
+    assert.ok(data.length > 50000, `${label} ne contient pas une image suffisante`);
+    assert.equal(data[0],0xFF); assert.equal(data[1],0xD8);
+  }
+  const audio=Buffer.from(ROOM_AUDIO,'base64');
+  assert.ok(audio.length > 5000);
+  assert.ok(audio.toString('ascii',0,3)==='ID3' || audio[0]===0xFF,'Audio MP3 attendu');
+  const res=api('/api/clue/1',{},clueAt(1));
+  assert.match(res.headers.get('content-type'),/image\/jpeg/);
+  const jpeg=Buffer.from(await res.arrayBuffer());
+  assert.deepEqual(jpeg,Buffer.from(CLUE_IMAGES[0],'base64'));
 });
