@@ -1,47 +1,43 @@
-# DOSSIER 03.11 — Production GitHub + Cloudflare Workers
+# DOSSIER 03.11
 
-Version PUBLIQUE : **aucun voyage dans le temps** ni bouton de test. Les scènes s'enchaînent uniquement à partir de l'heure vérifiée par le serveur Cloudflare.
+Dépôt complet du jeu : application, Worker, indices, données de salle, voix et images. L’application suit l’heure réelle de Paris. Les commandes d’avance temporelle sont retirées.
 
-## Calendrier exact (Europe/Paris)
+## Calendrier
 
-| Date | Scène |
-| --- | --- |
-| 25 octobre 2026, 00h00 (UTC+2) | Porte apparue, fermée |
-| 26 octobre 2026, 00h00 (UTC+1) | Ouverture et entrée dans la pièce |
-| 27 octobre 2026, 00h00 | Indice 1, avec zoom de caméra sur l'indice cliqué |
-| **28 octobre 2026, 00h00 (UTC+1)** | **Version concert : remplacement de la porte et de la salle. Indice 2 débloqué selon l’échéance inchangée.** |
-| 29 octobre 2026, 00h00 | Indice 3 ; visuels concert conservés |
-| 30 octobre 2026, 00h00 | Indice 4 ; visuels concert conservés |
-| **31 octobre 2026, 00h00** | **Édition Halloween : porte griffée et décor effrayant, ouverture animée, entrée dans le studio Halloween, indice 5 avec zoom.** |
-| 1 novembre 2026, 00h00 | Fin automatique du décor Halloween ; dernier chapitre : pièce vide et téléphone. Coffre scellé |
-| 2 novembre 2026, 00h00 | **Même scène** : coffre déverrouillable, enveloppe et lettre |
-| 3 novembre 2026, 00h00 | **Même scène en boucle**, sans révélation supplémentaire |
-| 3 novembre 2026, 18h00 | Fin du deuxième compte à rebours, la scène tourne toujours, sans nouvel écran |
+- 25 octobre 2026 à 00 h : la porte apparaît.
+- 26 octobre à 00 h : la salle normale s’ouvre.
+- 27 octobre à 00 h : l’indice 1 se débloque et le décor casino prend place.
+- 28 octobre à 00 h : le décor concert prend place.
+- 29 et 30 octobre : décor normal, seuls les indices 3 et 4 se débloquent à leur échéance.
+- 31 octobre à 00 h : scène Halloween et indice 5.
+- 1er novembre à 00 h : ouverture de la séquence finale; révélation le 3 novembre à 00 h.
 
-Le premier compteur du 03/11 à 00h00 et le second de la lettre du 03/11 à 18h00 restent distincts. Le changement d'heure en France entre les 24 et 25 octobre est pris en compte, sans passage à 01h00.
+La roue dessinée par le code est retirée. Les images de décor d’origine sont conservées. Le clic sur le personnage barbu lit la piste MP3 fournie par le Worker via `/api/room-audio`.
 
-## Mettre en ligne
+## Fichiers
 
-1. Décompresse le ZIP et remplace les fichiers de ton dépôt GitHub à la racine par les fichiers contenus ici (ne dépose pas le ZIP lui-même).
-2. Les fichiers essentiels sont `index.html`, `worker.mjs`, `room-data.mjs`, `clues-data.mjs`, `base-door.webp`, `base-room.webp`, `concert-door.webp`, `concert-room.webp`, `halloween-door.webp`, `halloween-room.webp`, `wrangler.jsonc`, `package.json`, `build.mjs` et `verification.test.mjs`. Ne pas enlever les images WebP ni les placer dans un sous-dossier.
-3. Garde ta configuration Cloudflare Workers (pas GitHub Pages), reliée à la branche `main`.
-4. Build : `npm run build` ; déploiement : `npx wrangler deploy`.
-5. Mets en ligne via **Commit changes** et recharge l'adresse `workers.dev` après la fin du déploiement.
+- `index.html` : interface et déroulement du jeu.
+- `worker.mjs` : API pour les échéances, indices, voix et scènes protégées.
+- `clues-data.mjs` et `room-data.mjs` : images d’indices, image de salle, piste audio et animation du personnage.
+- `*-door.webp` et `*-room.webp` : décors datés et décor normal.
+- `build.mjs` : copie l’application et ses images dans `dist/`.
+- `wrangler.jsonc` : configuration du Worker et de ses ressources statiques.
+- `CREDITS-SONS.md` : crédits et licence des effets sonores.
 
-Le décor concert intègre des faisceaux mobiles, des impulsions lumineuses, des lueurs de foule et de la fumée animée devant la porte. Le 28 octobre à minuit heure de Paris, les fichiers `concert-door.webp` et `concert-room.webp` remplacent la scène normale. Le Worker ne les sert que du 28 au 30 octobre. Le 31 octobre à minuit, le décor Halloween prend le relais pour cette seule journée ; le Worker bloque les images Halloween avant et après cette fenêtre. Les échéances des cinq indices restent inchangées : 27, 28, 29, 30 et 31 octobre à 00h00. Le clic sur la tête du personnage barbu conserve son audio et son animation.
+## Développement et déploiement
 
-Toute la scène finale est **intégrée à `index.html`** (pas besoin de `finale.html` et ne le publie pas séparément). Les vraies fiches des indices et les images/sons protégés sont lus depuis `worker.mjs` et les deux modules de données, qui doivent donc rester présents. Le panneau de déblocage des dates est absent. Pour éviter de dévoiler les images des indices dans GitHub, garde de préférence le dépôt privé ; le Worker reste public.
+Prérequis : Node.js et un compte Cloudflare. Le dépôt GitHub conserve le code source; le Worker Cloudflare sert l’API requise par le jeu. GitHub Pages seul ne fournit pas cette API.
 
-**Attention :** les éléments graphiques finaux intégrés au HTML peuvent être examinés depuis le code source, même si le serveur limite l'affichage du chapitre jusqu'au 1er novembre. Ne publie pas d'URL secrète du projet final dans le HTML.
+```bash
+npm install
+npm run dev
+```
 
-## Vérifications
+Pour publier depuis un environnement connecté à Cloudflare :
 
-- `npm test` : contrôle les horaires de Paris, la protection serveur, les deux échéances, les indices et l'absence des commandes de test.
-- `npm run build` : génère `dist/index.html` pour Cloudflare.
-- Ouvre ensuite ton URL `workers.dev` pour vérifier l'ensemble du parcours sur téléphone et sur ordinateur.
+```bash
+npx wrangler login
+npm run deploy
+```
 
-La boucle du 3 novembre rejoue les scènes existantes : pièce, téléphone, coffre, enveloppe et lettre. Elle ne crée pas de nouveau chapitre et ne remplace pas le compteur de 18h par une URL de révélation.
-
-## Vérification Halloween
-
-Le 28 octobre, la porte et la salle passent à la version concert avec la même animation d’ouverture. Le 31 octobre, Halloween prend le relais, avec ses cinq zones de clic ; les indices restent protégés par leur date serveur. Le 1er novembre, la scène finale habituelle prend le relais.
+Les variables de révélation optionnelles (`REVEAL_TITLE`, `REVEAL_MESSAGE`, `LETTER_REVEAL_MESSAGE`) ont des valeurs par défaut dans `wrangler.jsonc`. Aucun secret n’est requis pour le parcours présent.

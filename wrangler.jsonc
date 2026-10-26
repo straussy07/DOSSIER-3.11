@@ -10,7 +10,7 @@
   },
   "vars": {
     "REVEAL_TITLE": "LE DOSSIER EST OUVERT.",
-    "REVEAL_MESSAGE": "Le silence est termin\u00e9.",
-    "LETTER_REVEAL_MESSAGE": "Le rendez-vous est arriv\u00e9. La suite sera annonc\u00e9e ici."
+    "REVEAL_MESSAGE": "Le silence est terminé.",
+    "LETTER_REVEAL_MESSAGE": "Le rendez-vous est arrivé. La suite sera annoncée ici."
   }
 }

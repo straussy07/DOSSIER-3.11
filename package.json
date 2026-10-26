@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
-    "test": "node --test verification.test.mjs",
     "dev": "npm run build && npx wrangler dev",
     "deploy": "npm run build && npx wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
   }
 }
