@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import dossierWorker, {api, RELEASE, DOOR_AT, ROOM_AT, CLUE_AT, clueAt, FINALE_AT, SAFE_AT, LETTER_AT, chapterAt} from './worker.mjs';
+import dossierWorker, {api, RELEASE, DOOR_AT, ROOM_AT, CLUE_AT, clueAt, FINALE_AT, SAFE_AT, LETTER_AT, chapterAt, halloweenAt} from './worker.mjs';
 
 const millis = value => Date.parse(value);
 const html = readFileSync(new URL('./index.html', import.meta.url), 'utf8');
@@ -135,4 +135,52 @@ test('Fichiers multimédias originaux : cinq JPEG, deux JPEG de pièce et un MP3
   assert.match(res.headers.get('content-type'),/image\/jpeg/);
   const jpeg=Buffer.from(await res.arrayBuffer());
   assert.deepEqual(jpeg,Buffer.from(CLUE_IMAGES[0],'base64'));
+});
+
+
+test('Halloween : actif uniquement le 31 octobre, sans mode test et sans fuite des visuels', () => {
+  assert.match(html, /id="halloween-day-animation-styles"/);
+  assert.match(html, /id="halloween-day-assets"/);
+  assert.match(html, /this\.halloween=\(now\(\)>=window\.DOSSIER_HALLOWEEN\.start/);
+  assert.match(html, /halloween\?6000:5200/);
+  assert.match(html, /this\.animate\(850,p=>this\.clueCameraTransform\(camera,p\)\)/);
+  assert.doesNotMatch(html, /window\.DOSSIER_TEST_MODE|MODE TEST|__DOSSIER_SIMULATED_EPOCH__|dossier-test-panel/);
+  assert.doesNotMatch(html, /data:image\/webp;base64,UklGRky\+Bw/);
+  assert.match(html, /halloween-door\.webp/);
+  assert.match(html, /halloween-room\.webp/);
+});
+
+test('Visuels Halloween : les bornes 00h00 Europe/Paris sont exactes',()=>{
+  const start=Date.parse('2026-10-31T00:00:00+01:00'),end=Date.parse('2026-11-01T00:00:00+01:00');
+  assert.equal(halloweenAt(start-1),false);
+  assert.equal(halloweenAt(start),true);
+  assert.equal(halloweenAt(end-1),true);
+  assert.equal(halloweenAt(end),false);
+});
+
+
+test('Le Worker bloque réellement les deux visuels en dehors du 31 octobre', async () => {
+  const start=Date.parse('2026-10-31T00:00:00+01:00'),end=Date.parse('2026-11-01T00:00:00+01:00');
+  const original=Date.now;
+  try {
+    for(const path of ['/halloween-door.webp','/halloween-room.webp']) {
+      for(const [instant,expected] of [[start-1,403],[start,200],[end-1,200],[end,403]]) {
+        Date.now=()=>instant;
+        const response=await dossierWorker.fetch(new Request('https://example.workers.dev'+path),{
+          ASSETS:{fetch:request=>new Response(new URL(request.url).pathname,{status:200})}
+        });
+        assert.equal(response.status,expected,`${path} à ${new Date(instant).toISOString()}`);
+        assert.equal(response.headers.get('cache-control'),'no-store');
+      }
+    }
+  } finally { Date.now=original; }
+});
+
+test('Deux fichiers WebP Halloween valides et repris par le build',()=>{
+  for(const file of ['halloween-door.webp','halloween-room.webp']){
+    const b=readFileSync(new URL('./'+file,import.meta.url));
+    assert.ok(b.length>50000);
+    assert.equal(b.toString('ascii',0,4),'RIFF');
+    assert.equal(b.toString('ascii',8,12),'WEBP');
+  }
 });

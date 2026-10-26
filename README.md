@@ -12,8 +12,8 @@ Version PUBLIQUE : **aucun voyage dans le temps** ni bouton de test. Les scènes
 | 28 octobre 2026, 00h00 | Indice 2 |
 | 29 octobre 2026, 00h00 | Indice 3 |
 | 30 octobre 2026, 00h00 | Indice 4 |
-| 31 octobre 2026, 00h00 | Indice 5 |
-| 1 novembre 2026, 00h00 | Dernier chapitre : pièce vide et téléphone. Coffre scellé |
+| **31 octobre 2026, 00h00** | **Édition Halloween : porte griffée et décor effrayant, ouverture animée, entrée dans le studio Halloween, indice 5 avec zoom.** |
+| 1 novembre 2026, 00h00 | Fin automatique du décor Halloween ; dernier chapitre : pièce vide et téléphone. Coffre scellé |
 | 2 novembre 2026, 00h00 | **Même scène** : coffre déverrouillable, enveloppe et lettre |
 | 3 novembre 2026, 00h00 | **Même scène en boucle**, sans révélation supplémentaire |
 | 3 novembre 2026, 18h00 | Fin du deuxième compte à rebours, la scène tourne toujours, sans nouvel écran |
@@ -23,10 +23,12 @@ Le premier compteur du 03/11 à 00h00 et le second de la lettre du 03/11 à 18h0
 ## Mettre en ligne
 
 1. Décompresse le ZIP et remplace les fichiers de ton dépôt GitHub à la racine par les fichiers contenus ici (ne dépose pas le ZIP lui-même).
-2. Les fichiers essentiels sont `index.html`, `worker.mjs`, `room-data.mjs`, `clues-data.mjs`, `wrangler.jsonc`, `package.json`, `build.mjs` et `verification.test.mjs`.
+2. Les fichiers essentiels sont `index.html`, `worker.mjs`, `room-data.mjs`, `clues-data.mjs`, `halloween-door.webp`, `halloween-room.webp`, `wrangler.jsonc`, `package.json`, `build.mjs` et `verification.test.mjs`. Ne pas enlever les images WebP ni les placer dans un sous-dossier.
 3. Garde ta configuration Cloudflare Workers (pas GitHub Pages), reliée à la branche `main`.
 4. Build : `npm run build` ; déploiement : `npx wrangler deploy`.
 5. Mets en ligne via **Commit changes** et recharge l'adresse `workers.dev` après la fin du déploiement.
+
+Le 31 octobre à minuit heure de Paris, la même navigation devient Halloween automatiquement. Les deux fichiers `halloween-*.webp` sont servis par le Worker **uniquement pendant le 31 octobre** : avant et après, les images sont bloquées côté serveur. Aucun clic, bouton ou avance de date n’est nécessaire. Toutes les autres journées conservent leurs animations et leur décor d’origine.
 
 Toute la scène finale est **intégrée à `index.html`** (pas besoin de `finale.html` et ne le publie pas séparément). Les vraies fiches des indices et les images/sons protégés sont lus depuis `worker.mjs` et les deux modules de données, qui doivent donc rester présents. Le panneau de déblocage des dates est absent. Pour éviter de dévoiler les images des indices dans GitHub, garde de préférence le dépôt privé ; le Worker reste public.
 
@@ -39,3 +41,7 @@ Toute la scène finale est **intégrée à `index.html`** (pas besoin de `finale
 - Ouvre ensuite ton URL `workers.dev` pour vérifier l'ensemble du parcours sur téléphone et sur ordinateur.
 
 La boucle du 3 novembre rejoue les scènes existantes : pièce, téléphone, coffre, enveloppe et lettre. Elle ne crée pas de nouveau chapitre et ne remplace pas le compteur de 18h par une URL de révélation.
+
+## Vérification Halloween
+
+Les fichiers de médias Halloween ont été repris à partir de la version test validée. Le 31 octobre, la porte s’ouvre avec l’animation, puis le studio reçoit les cinq zones de clic ; chaque indice reste protégé par la date serveur (le 5e indice s’ouvre le 31 à 00h00). Le 1er novembre, la scène finale habituelle prend le relais. Ne pas publier le fichier HTML de test à la place du `index.html` de ce dossier.
